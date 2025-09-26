@@ -2,6 +2,27 @@ from tkinter import *
 from tkinter import messagebox
 from random import choice, shuffle,randint
 import pyperclip
+import json
+
+
+
+def find_password():
+
+    try:
+        with open('data.json','r') as new_pass:
+            data = json.load(new_pass)
+        if website_input.get() in data:
+            messagebox.showinfo(title=f'{website_input.get()}', message=f'Email: {data[website_input.get()]['email']}\n'
+                                f'Password: {data[website_input.get()]['password']}' )
+        else:
+            messagebox.showinfo(title='Website Name Error', message=f'No details for the website exists.' )
+    except FileNotFoundError:
+        messagebox.showinfo(title='Data File Error', message=f'No Data File Found.' )
+
+
+
+
+
 
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
@@ -34,18 +55,34 @@ def generate_password():
 
 def save():
 
-    if len(email_input.get()) == 0 or len(password_input.get()) == 0:
+    new_data = {
+        website_input.get(): {
+            'email':email_input.get(),
+            'password':password_input.get(),
+        }
+
+    }
+
+    if len(website_input.get()) == 0 or len(password_input.get()) == 0:
        messagebox.showwarning(title='Empty cell', message=f'Please dont leave any fields empty.' )     
     else:
-        is_ok = messagebox.askokcancel(title=website,message=f'These are the details entered: \nEmail: {email_input.get()}'
-                            f'\nPassword: {password_input.get()} \n Is it okey to save?')
+        try:
+            with open('data.json','r') as new_pass:
+                
+                data = json.load(new_pass)
+        except FileNotFoundError:
+                with open('data.json','w') as new_pass:
+                    json.dump(new_data,new_pass,indent=4)
+        else:
+            data.update(new_data)
 
-        if is_ok:
-            with open('data.txt','a') as new_pass:
-                new_pass.write(f'{website_input.get()} | {email_input.get()} | {password_input.get()}\n')
-                website_input.delete(0,END)
-                password_input.delete(0,END)
-                website_input.focus()
+            with open('data.json','w') as new_pass:
+                json.dump(data,new_pass,indent=4)
+        
+        finally:
+            website_input.delete(0,END)
+            password_input.delete(0,END)
+            website_input.focus()
         
 
 
@@ -80,7 +117,7 @@ password.grid(row=3,column=0)
 # Entries
 
 website_input = Entry(width=35)
-website_input.grid(row=1,column=1,columnspan=2,sticky='w')
+website_input.grid(row=1,column=1,sticky='w')
 website_input.focus()
 
 email_input = Entry(width=35)
@@ -92,15 +129,18 @@ password_input = Entry(width=35)
 password_input.grid(row=3,column=1,sticky='w')
 
 
+
 # Buttons
 
 generate_password = Button(text='Generate Password',padx=10,command = generate_password)
 generate_password.grid(row=3,column=2)
 
 
-add_password = Button(text='Add',width=36,command=save)
+add_password = Button(text='Add',width=35,command=save)
 add_password.grid(row=4,column=1,columnspan=2,sticky='w')
 
+search = Button(text='Search',command=find_password)
+search.grid(row=1,column=2,sticky='w')
 
 
 
